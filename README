@@ -1,0 +1,13 @@
+Copyright (c) 2010-2012 Shiftboard, Inc.
+
+Python API Client Libraries for Shiftboard.com
+
+This is a Python-based set of libraries for interacting with the API service
+for Shiftboard.com. The libraries may be used directly, or as an example for
+developing custom code using data from Shiftboard.
+
+To make use of these client libraries, you will need an active account on
+Shiftboard.com, and will need to have an API Access Key and Signature Key
+enabled in your account.
+
+For more information on the Shiftboard APIs, see http://www.shiftdata.com.
