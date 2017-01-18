@@ -1,5 +1,5 @@
-
 import shiftboard
+
 
 class Result(dict):
     """Base class for single-record api responses"""
@@ -30,16 +30,41 @@ class Result(dict):
     def getData(self):
         """Often-overriden method for loading data from API"""
         return self.session.apicall('%s.list' % self.name,
-            select = { self.name: self['id'] },
-            extended = True,
-            **self.reqargs
-            )['result'][self.name_plural][0]
+                                    select={self.name: self['id']},
+                                    extended=True,
+                                    **self.reqargs
+                                    )['result'][self.name_plural][0]
 
     def __hash__(self):
         return int(self['id'])
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and hash(self) == hash(other)
+
+    def denormalizeReferenced(self, objects):
+        """Denormalize, building lightweight versions of referenced data"""
+        self.denormalizeLight(objects, 'timezone')
+        self.denormalizeLight(objects, 'covering_member', 'account', cls=shiftboard.account.Account)
+        self.denormalizeLight(objects, 'covering_workgroup', 'workgroup', cls=shiftboard.workgroup.Workgroup)
+        self.denormalizeLight(objects, 'workgroup', cls=shiftboard.workgroup.Workgroup)
+        self.denormalizeLight(objects, 'location', cls=shiftboard.location.Location)
+        self.denormalizeLight(objects, 'work_status_type', 'workStatusType')
+        self.denormalizeLight(objects, 'role', cls=shiftboard.role.Role)
+
+    def denormalizeLight(self, objects, key, obj_name=None, cls=None):
+        if not obj_name:
+            obj_name = key
+        if not obj_name in objects:
+            return
+
+        if key in self and self[key]:
+            obj = objects[obj_name][self[key]]
+            if cls:
+                # higher level object
+                self[key] = cls(self.session, seed=obj)
+            else:
+                # simple dict
+                self[key] = obj
 
 
 class Results(object):
@@ -75,10 +100,10 @@ class Results(object):
         """Make the API call to get some data"""
         page['batch'] = self.batch
         return self.session.apicall('%s.list' % self.child.name,
-            select=self.select,
-            page=page,
-            **self.reqargs
-            )
+                                    select=self.select,
+                                    page=page,
+                                    **self.reqargs
+                                    )
 
     def element(self, d):
         """Converts a dict of data to an element object"""
@@ -155,9 +180,9 @@ class Results(object):
         objects = dict(
             (o['id'], o) for o in cls(
                 self.session,
-                select = {selectkey: list(ids)},
-                batch = shiftboard.MAX_BATCH_SIZE)
-            )
+                select={selectkey: list(ids)},
+                batch=shiftboard.MAX_BATCH_SIZE)
+        )
 
         for rec in self:
             if key in rec and rec[key]:
