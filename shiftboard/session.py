@@ -18,9 +18,11 @@ from shiftboard.account import Account, MyAccount, Accounts
 from shiftboard.workgroup import Workgroup, Workgroups
 from shiftboard.location import Location, Locations
 from shiftboard.shift import Shift, Shifts, ExtendedShifts, WhosOnShifts
+from shiftboard.tradeboard import Trade, Trades
 from shiftboard.timeclock import Timeclock, WhosOnTimeclocks
 
 URL = 'https://www.shiftboard.com/servola/api/api.cgi'
+
 
 class Session(object):
     """Implement an API session, storing session data and transaction ID"""
@@ -43,8 +45,10 @@ class Session(object):
         reference to this session."""
 
         cls = getattr(shiftboard.session, name)
+
         def callable(*args, **kwargs):
             return cls(self, *args, **kwargs)
+
         return callable
 
     def __str__(self):
@@ -53,8 +57,10 @@ class Session(object):
     signature_key: %s
     url: %s""" % (self.__class__.__name__, self.access_key_id, self.signature_key, self.url)
 
+
 class TokenSession(Session):
     """Session that authenticates using token (in addition to system API key)"""
+
     def __init__(self, token, *args, **kwargs):
         self.token = token
         super(TokenSession, self).__init__(*args, **kwargs)
