@@ -5,6 +5,7 @@ import hashlib
 import httplib
 import urllib
 import urllib2
+import datetime
 
 # Different versions of Python have a different name for the JSON library.
 try:
@@ -12,12 +13,26 @@ try:
 except ImportError:
     import json
 
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, datetime.datetime):
+        serial = obj.isoformat()
+        return serial
+    if isinstance(obj, datetime.date):
+        serial = obj.isoformat()
+        return serial
+    raise TypeError("Type not serializable")
+
+
 # track most recent url for debugging
 lasturl = None
 
-LOGREQUEST=False; LOGRESPONSE=False;
-#LOGREQUEST=True; LOGRESPONSE=False;
-#LOGREQUEST=True; LOGRESPONSE=True;
+LOGREQUEST = False;
+LOGRESPONSE = False;
+# LOGREQUEST=True; LOGRESPONSE=False;
+# LOGREQUEST=True; LOGRESPONSE=True;
 
 if LOGREQUEST or LOGRESPONSE:
     try:
@@ -40,19 +55,23 @@ class RPCError(Exception):
         return '<%s %s: %s method:%s params:%r>' % (
             self.__class__.__name__, self.code, self.message, self.method, self.params)
 
+
 class RPCServerError(RPCError):
     """Exception representing an rpc error response"""
+
     def __init__(self, json_error_struct, method, params):
         RPCError.__init__(
             self,
             json_error_struct['data']['code'],
-            json_error_struct['data'].get('message',''),
+            json_error_struct['data'].get('message', ''),
             method,
             params
-            )
+        )
+
 
 class RPCClientError(RPCError):
     pass
+
 
 class _ApiCallJson(object):
     """Callable class to return from session.__attr__ implementing arbitrary
@@ -94,7 +113,7 @@ class _ApiCallJson(object):
             'access_key_id': self.session.access_key_id,
             'signature': self._b64(self.digest.digest()),
             'params': self._b64(self.json_params),
-            }
+        }
 
     @property
     def url(self):
@@ -132,14 +151,16 @@ class _ApiCallJson(object):
     def _prettify(self, json_obj):
         """De+encode json with pretty-printing"""
         return json.dumps(json.loads(json_obj),
-                                sort_keys=True, indent='    ',
-                                )
+                          sort_keys=True, indent='    ',
+                          )
+
 
 class _ApiCall(_ApiCallJson):
     """Extend API callable class to accept & return python structures."""
 
     def get_result(self, params):
-        json_params = json.dumps(params)
+        # Convert date and datetime objects to serializable forms
+        json_params = json.dumps(params, default=json_serial)
         result = self.get_result_json(json_params)
         result = json.loads(result)
         if 'error' in result:
@@ -155,6 +176,7 @@ class _ApiCall(_ApiCallJson):
         else:
             params = kw
         self.get_result(params)
+
 
 class _ApiCallToken(_ApiCall):
     """Extends for use with a token."""
