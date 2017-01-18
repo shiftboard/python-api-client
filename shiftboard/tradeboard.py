@@ -1,6 +1,7 @@
 """
 Classes to represent the tradeboard
 """
+# TODO: Approve, Reject, Delete trades
 
 from result import *
 
