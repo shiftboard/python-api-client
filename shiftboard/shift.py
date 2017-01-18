@@ -4,14 +4,15 @@ Classes to represent single and multiple shifts.
 import time, datetime
 
 from result import *
-from workgroup import Workgroups, Workgroup
-from account import Accounts, Account
-from location import Locations, Location
-from role import Roles, Role
+from workgroup import Workgroups
+from account import Accounts
+from location import Locations
+from role import Roles
 from profiletype import ProfileTypes
 
 TIMEFMT = '%l:%M%P'
 DAYFMT = '%B %d, %Y'
+
 
 class Shift(Result):
     """Represents a single shift"""
@@ -19,12 +20,50 @@ class Shift(Result):
     name = 'shift'
     name_plural = 'shifts'
 
+    def __init__(self, *initial_data, **kwargs):
+        super(Shift, self).__init__(*initial_data, **kwargs)
+        if len(initial_data) > 1:
+            self.create(initial_data[1], **kwargs)
+
+    def create(self, *initial_data, **kwargs):
+        """
+            Create a new shift. Must specify at least start_date and workgroup.
+        """
+
+        for dictionary in initial_data:
+            for key in dictionary:
+                # setattr(self, key, dictionary[key])
+                self[key] = dictionary[key]
+        for key in kwargs:
+            # setattr(self, key, kwargs[key])
+            self[key] = kwargs[key]
+
+        # TODO: Make sure start_date and workgroup are specified
+
+        if "start_date" in self and isinstance(self["start_date"], datetime.datetime):
+            self["start_date"] = self["start_date"].strftime("%Y-%m-%dT%H:%M:%S")
+        if "end_date" in self and isinstance(self["end_date"], datetime.datetime):
+            self["end_date"] = self["end_date"].strftime("%Y-%m-%dT%H:%M:%S")
+
+        kwargs = self.shift_dict_from_object()
+        result = self.session.apicall("shift.create", **kwargs)
+        if 'id' in result['result']:
+            self['id'] = result['result']['id']
+            return self
+        return None
+
     def getData(self):
         """Fetch one shift from the API"""
-        result = self.session.apicall('shift.get',
-            id = self['id']
-            )
+        result = self.session.apicall('shift.get', id=self['id'])
         return result['result']['shift']
+
+    def delete(self):
+        """Remove shift via the API"""
+        try:
+            result = self.session.apicall('shift.delete', id=self['id'])
+            return True
+        except:
+            return False
 
     def time(self, show_end_date=True, timefmt=TIMEFMT):
         """Human-readable time display"""
@@ -35,7 +74,7 @@ class Shift(Result):
             return '%s - %s' % (
                 self.startDate().strftime(timefmt),
                 self.endDate().strftime(timefmt),
-                )
+            )
 
         return '%s' % (self.startDate().strftime(timefmt),)
 
@@ -43,7 +82,7 @@ class Shift(Result):
         """Human-readable day display"""
         start_date = self.startDate()
 
-	if start_date.date() == datetime.date.today():
+        if start_date.date() == datetime.date.today():
             return 'Today'
 
         if 'end_date' in self and show_end_date:
@@ -52,7 +91,7 @@ class Shift(Result):
                 return '%s - %s' % (
                     start_date.strftime(dayfmt),
                     end_date.strftime(dayfmt),
-                    )
+                )
 
         return '%s' % (start_date.strftime(dayfmt),)
 
@@ -61,37 +100,46 @@ class Shift(Result):
             datetime.datetime.strptime(
                 self['start_date'], '%Y-%m-%dT%H:%M:%S')
             return False
-        except ValueError: # all-day events have no start time
+        except ValueError:  # all-day events have no start time
             return True
 
     def startDate(self):
-        """parse start date into standard python structure"""
+        """parse start date/time into standard python structure"""
         try:
             return datetime.datetime.strptime(
                 self['start_date'], '%Y-%m-%dT%H:%M:%S')
-        except ValueError: # all-day events have no start time
+        except ValueError:  # all-day events have no start time
             return datetime.datetime.strptime(
                 self['start_date'], '%Y-%m-%d')
 
     def endDate(self):
+        """parse end date/time into standard python structure"""
         try:
             return datetime.datetime.strptime(
                 self['end_date'], '%Y-%m-%dT%H:%M:%S')
         except KeyError:
             return None
 
+    def createDate(self):
+        """parse create date/time into standard python structure"""
+        try:
+            return datetime.datetime.strptime(
+                self['created'], '%Y-%m-%dT%H:%M:%SZ')
+        except KeyError:
+            return None
+
     def workgroupName(self):
         return (
             self.get('workgroup') or
-            { 'name': '[ no workgroup ]' }
-            ).get('name')
+            {'name': '[ no workgroup ]'}
+        ).get('name')
 
     def locationName(self):
         """Get the location name, expects it to be denormalized."""
         return (
             self.get('location') or
-            { 'name': '[ no location specified ]' }
-            ).get('name')
+            {'name': '[ no location specified ]'}
+        ).get('name')
 
     def coveredBy(self):
         """
@@ -120,15 +168,15 @@ class Shift(Result):
         if delta:
             return delta
 
-        delta = cmp(self.get('subject',''), other.get('subject',''))
+        delta = cmp(self.get('subject', ''), other.get('subject', ''))
         if delta:
             return delta
 
-        delta = cmp(self.get('id',''), other.get('id',''))
+        delta = cmp(self.get('id', ''), other.get('id', ''))
         if delta:
             return delta
 
-        delta = cmp(self.get('workgroup',''), other.get('workgroup', ''))
+        delta = cmp(self.get('workgroup', ''), other.get('workgroup', ''))
         if delta:
             return delta
 
@@ -145,30 +193,21 @@ class Shift(Result):
                 self.get('covered') == other.get('covered') and
                 self.get('covering_member', '') == other.get('covering_member'))
 
-    def denormalizeReferenced(self, objects):
-        """Denormalize, building lightweight versions of referenced data"""
-        self.denormalizeLight(objects, 'timezone')
-        self.denormalizeLight(objects, 'covering_member', 'account', cls=Account)
-        self.denormalizeLight(objects, 'covering_workgroup', 'workgroup', cls=Workgroup)
-        self.denormalizeLight(objects, 'workgroup', cls=Workgroup)
-        self.denormalizeLight(objects, 'location', cls=Location)
-        self.denormalizeLight(objects, 'work_status_type', 'workStatusType')
-        self.denormalizeLight(objects, 'role', cls=Role)
-
-    def denormalizeLight(self, objects, key, obj_name=None, cls=None):
-        if not obj_name:
-            obj_name = key
-        if not obj_name in objects:
-            return
-
-        if key in self and self[key]:
-            obj = objects[obj_name][self[key]]
-            if cls:
-                # higher level object
-                self[key] = cls(self.session, seed=obj)
-            else:
-                # simple dict
-                self[key] = obj
+    def shift_dict_from_object(self):
+        shift_dict = self.copy()
+        shift_dict.pop("session", None)
+        for keyname in shift_dict:
+            if isinstance(shift_dict[keyname], dict):
+                subdict = shift_dict.pop(keyname, None)
+                try:
+                    shift_dict[keyname] = subdict['id']
+                except:
+                    try:
+                        shift_dict[keyname] = subdict['name']
+                    except:
+                        # print "Could not extract value from dict: %s" % keyname
+                        shift_dict[keyname] = None
+        return shift_dict
 
 
 class Shifts(Results):
@@ -212,8 +251,8 @@ class Shifts(Results):
 
         profiles = ProfileTypes(
             self.session,
-            batch = shiftboard.MAX_BATCH_SIZE,
-            )
+            batch=shiftboard.MAX_BATCH_SIZE,
+        )
 
         profiled = dict((p['id'], p) for p in profiles)
 
@@ -231,7 +270,8 @@ class ExtendedShifts(Shifts):
     def getData(self, page={}):
         page['batch'] = self.batch
         return self.session.apicall('shift.list',
-            extended=True, select=self.select, page=page)
+                                    extended=True, select=self.select, page=page)
+
 
 class WhosOnShifts(Shifts):
     """Represents a list of shifts scheduled right now"""
@@ -239,7 +279,7 @@ class WhosOnShifts(Shifts):
     def getData(self, page={}):
         page['batch'] = self.batch
         return self.session.apicall('shift.whosOn',
-            select=self.select, page=page)
+                                    select=self.select, page=page)
 
     def denormalizeTimeclocks(self):
         for shift in self:
