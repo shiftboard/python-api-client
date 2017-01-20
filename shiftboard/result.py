@@ -122,7 +122,7 @@ class Results(object):
 
     def __getitem__(self, idx):
         try:
-            if idx > self.count:
+            if idx >= self.count:
                 raise IndexError
             return self.storage[idx]
         except (KeyError, AttributeError):
@@ -131,6 +131,9 @@ class Results(object):
 
     def __iter__(self):
         for idx in range(0, len(self)):
+            if idx >= len(self):
+                # Why in the world is this happening???
+                break
             yield self[idx]
 
     def __getslice__(self, start, end):
