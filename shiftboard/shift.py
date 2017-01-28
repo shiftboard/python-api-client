@@ -65,6 +65,14 @@ class Shift(Result):
         except:
             return False
 
+    def getOfferedTrade(self):
+        """Get a trade associated with this shift"""
+        try:
+            result = self.session.apicall('shift.getOfferedTrade', id=self['id'])
+            return result['result']['tradeboard']
+        except Exception as e:
+            return None
+
     def time(self, show_end_date=True, timefmt=TIMEFMT):
         """Human-readable time display"""
         # todo: handle ending on a different day?
