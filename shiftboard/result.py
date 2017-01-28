@@ -91,7 +91,10 @@ class Results(object):
         self.page = obj['page']
 
         # convert to 0-index here:
-        start = obj['page']['this']['start'] - 1
+        try:
+            start = obj['page']['this']['start'] - 1
+        except:
+            start = 0
         for obj in obj[self.child.name_plural]:
             self.storage[start] = self.element(obj)
             start += 1
@@ -102,6 +105,7 @@ class Results(object):
         return self.session.apicall('%s.list' % self.child.name,
                                     select=self.select,
                                     page=page,
+                                    extended=True,
                                     **self.reqargs
                                     )
 
