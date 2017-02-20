@@ -89,6 +89,17 @@ class MyAccount(Account):
         """Returns account's application permission set"""
         return self.get('user_applications')
 
+    def onboard_labels(self):
+        """Returns account's onboarding labels as dict with names as keys, integers as values"""
+        labels = {}
+        try:
+            labelArray = self.get('org_settings').get('onboard_labels')
+            for value in labelArray:
+                labels[labelArray[value]] = value
+        except:
+            return labels
+        return labels
+
 
 class Accounts(Results):
     """Represents multiple Account records"""
