@@ -92,6 +92,7 @@ class MyAccount(Account):
     def onboard_labels(self):
         """Returns account's onboarding labels as dict with names as keys, integers as values"""
         labels = {}
+        self.load()
         try:
             labelArray = self.get('org_settings').get('onboard_labels')
             for value in labelArray:
