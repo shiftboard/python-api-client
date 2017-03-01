@@ -20,6 +20,8 @@ from shiftboard.location import Location, Locations
 from shiftboard.shift import Shift, Shifts, ExtendedShifts, WhosOnShifts
 from shiftboard.tradeboard import Trade, Trades
 from shiftboard.timeclock import Timeclock, WhosOnTimeclocks
+from shiftboard.client import Client, Clients
+from shiftboard.role import Role, Roles
 
 URL = 'https://www.shiftboard.com/servola/api/api.cgi'
 
