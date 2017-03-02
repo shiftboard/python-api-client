@@ -62,8 +62,8 @@ class RPCServerError(RPCError):
     def __init__(self, json_error_struct, method, params):
         RPCError.__init__(
             self,
-            json_error_struct['data']['code'],
-            json_error_struct['data'].get('message', ''),
+            json_error_struct['code'],
+            json_error_struct['data'].get('misc', ''),
             method,
             params
         )
