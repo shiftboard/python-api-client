@@ -59,6 +59,9 @@ class Session(object):
     signature_key: %s
     url: %s""" % (self.__class__.__name__, self.access_key_id, self.signature_key, self.url)
 
+    def echo(self, message="hello"):
+        return self.apicall('system.echo', message=message)
+
 
 class TokenSession(Session):
     """Session that authenticates using token (in addition to system API key)"""
