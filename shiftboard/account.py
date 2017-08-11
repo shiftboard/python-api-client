@@ -1,5 +1,5 @@
 """
-Classes to represent singe and multiple account records
+Classes to represent single and multiple account records
 """
 
 from result import *

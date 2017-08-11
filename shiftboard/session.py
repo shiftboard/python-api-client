@@ -15,6 +15,7 @@ import shiftboard.session
 
 from shiftboard.call import _ApiCall, _ApiCallJson, _ApiCallToken
 from shiftboard.account import Account, MyAccount, Accounts
+from shiftboard.availability import Availability, AvailabilityList
 from shiftboard.workgroup import Workgroup, Workgroups
 from shiftboard.location import Location, Locations
 from shiftboard.shift import Shift, Shifts, ExtendedShifts, WhosOnShifts
@@ -22,6 +23,7 @@ from shiftboard.tradeboard import Trade, Trades
 from shiftboard.timeclock import Timeclock, WhosOnTimeclocks
 from shiftboard.client import Client, Clients
 from shiftboard.role import Role, Roles
+from shiftboard.profile import ProfileConfiguration, ProfileConfigurationList, ProfileType, ProfileTypes, ProfileData, ProfileDataList
 
 URL = 'https://www.shiftboard.com/servola/api/api.cgi'
 
