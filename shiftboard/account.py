@@ -25,6 +25,8 @@ class Account(Result):
     def updateAccount(self):
         try:
             kwargs = self.copy()
+            if 'default_language' in kwargs and kwargs['default_language'] == None:
+                kwargs.pop('default_language', None)
             kwargs.pop('region', None)
             result = self.session.apicall('account.update', **kwargs)
             data = result['result']
