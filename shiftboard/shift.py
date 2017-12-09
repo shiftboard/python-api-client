@@ -8,7 +8,7 @@ from workgroup import Workgroups
 from account import Accounts
 from location import Locations
 from role import Roles
-from profiletype import ProfileTypes
+from profile import ProfileTypes
 
 TIMEFMT = '%l:%M%P'
 DAYFMT = '%B %d, %Y'
@@ -235,7 +235,10 @@ class Shifts(Results):
                         objidx.setdefault(objname, dict())[robj['id']] = robj
                     elif 'name' in robj:
                         objidx.setdefault(objname, dict())[robj['name']] = robj
-            start = obj['page']['this']['start'] - 1
+            try:
+                start = obj['page']['this']['start'] - 1
+            except Exception as e:
+                start = 0
             for idx in range(start, start + len(obj[self.child.name_plural])):
                 self.storage[idx].denormalizeReferenced(objidx)
 

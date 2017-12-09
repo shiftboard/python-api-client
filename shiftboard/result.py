@@ -131,7 +131,10 @@ class Results(object):
             return self.storage[idx]
         except (KeyError, AttributeError):
             self.loadBatch(idx)
-            return self.storage[idx]
+            try:
+                return self.storage[idx]
+            except (KeyError, AttributeError):
+                return None
 
     def __iter__(self):
         for idx in range(0, len(self)):

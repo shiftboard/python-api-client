@@ -1,5 +1,5 @@
 """
-Classes to represent singe and multiple account records
+Classes to represent single and multiple account records
 """
 
 from result import *
@@ -25,6 +25,8 @@ class Account(Result):
     def updateAccount(self):
         try:
             kwargs = self.copy()
+            if 'default_language' in kwargs and kwargs['default_language'] == None:
+                kwargs.pop('default_language', None)
             kwargs.pop('region', None)
             result = self.session.apicall('account.update', **kwargs)
             data = result['result']
@@ -89,7 +91,7 @@ class MyAccount(Account):
         """Returns account's application permission set"""
         return self.get('user_applications')
 
-    def onboard_labels(self):
+    def onboard_labels_by_name(self):
         """Returns account's onboarding labels as dict with names as keys, integers as values"""
         labels = {}
         self.load()
@@ -100,6 +102,15 @@ class MyAccount(Account):
         except:
             return labels
         return labels
+
+    def onboard_labels(self):
+        """Returns account's onboarding labels as dict with integers as keys, names as values"""
+        self.load()
+        try:
+            labelArray = self.get('org_settings').get('onboard_labels')
+        except:
+            return {}
+        return labelArray
 
 
 class Accounts(Results):
